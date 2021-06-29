@@ -1,0 +1,74 @@
+LOAD CSV WITH HEADERS
+FROM 'file:///combine.csv' AS line
+WITH line
+CREATE (movie:Movie {id: toInteger(line.`movie_id`), title: line.`title`, imdbid: line.`imdbID`, plot: line.`Plot`, poster: line.`Poster`, imdbrating: line.`imdbRating`, imdbvotes: line.`imdbVotes`,runtime: line.`Runtime`})
+
+MERGE (classified:Classified {name:COALESCE(line.`Rated`, "NULL")})
+MERGE (movie)-[:CLASSIFIED]->(classified)
+
+MERGE (year:Year {year:COALESCE(line.`Year`, "NULL")})
+MERGE (movie)-[:IN_YEAR]->(year)
+
+WITH line,movie
+UNWIND split(COALESCE(line.`Director`, "NULL"), ',') AS directors
+MERGE (director:Director {name: ltrim(directors)})
+MERGE (movie)-[:DIRECTED_BY]->(director)
+
+WITH line,movie
+UNWIND split(COALESCE(line.`Genre`, "NULL"), ',') AS genres
+MERGE (genre:Genre {name: ltrim(genres)})
+MERGE (movie)-[:IN_GENRE]->(genre)
+
+WITH line,movie
+UNWIND split(COALESCE(line.`Language`, "NULL"), ',') AS languages
+MERGE (language:Language {name: ltrim(languages)})
+MERGE (movie)-[:IN_LANGUAGE]->(language)
+
+WITH line,movie
+UNWIND split(COALESCE(line.`Country`, "NULL"), ',') AS countries
+MERGE (country:Country {name: ltrim(countries)})
+MERGE (movie)-[:IN_COUNTRIES]->(country)
+
+WITH line,movie
+UNWIND split(COALESCE(line.`Actors`, "NULL"), ',') AS actors
+MERGE (actor:Actor {name: ltrim(actors)})
+MERGE (movie)-[:ACTED_BY]->(actor)
+
+
+
+
+
+
+LOAD CSV WITH HEADERS
+FROM 'file:///users.csv' AS line
+WITH line
+CREATE (user:User {id: toInteger(line.`user_id`), Zipcode: line.`zip_code`})
+
+MERGE (gender:Gender {name:COALESCE(line.`sex`, "NULL")})
+MERGE (user)-[:IN_GENDER]->(gender)
+
+MERGE (occupation:Occupation {name:COALESCE(line.`occupation`, "NULL")})
+MERGE (user)-[:HAS_OCCUPATION]->(occupation)
+
+MERGE (agegroup:Agegroup {name:COALESCE(line.`age`, "NULL")})
+MERGE (user)-[:IN_AGEGROUP]->(agegroup)
+
+
+LOAD CSV WITH HEADERS
+FROM 'file:///ratings.csv' AS line
+WITH line
+
+MATCH (movie:Movie{id:toInteger(line.`movie_id`)})
+MATCH (user:User{id:toInteger(line.`user_id`)})
+
+MERGE (user)-[:RATED{rating:toInteger(line.`rating`),timestamp:toInteger(line.`timestamp`)}]->(movie)
+
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS
+FROM 'file:///ratings.csv' AS line
+WITH line
+MATCH (movie:Movie{id:toInteger(line.`movie_id`)})
+MATCH (user:User{id:toInteger(line.`user_id`)})
+MERGE (user)-[:RATED{rating:toInteger(line.`rating`)}]->(movie)
+
