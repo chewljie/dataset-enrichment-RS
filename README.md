@@ -5,6 +5,7 @@ Item-based and user-based collaborative filtering techniques has been integrated
 
 # Requirements
 - Python 3.6 (Linux is prefered for the multiprocessing)
+- Jupyter Notebook
 - Neo4j 3.12 or above (with Graph Data Science Library Plugin enabled)
 - Surprise 1.1 https://github.com/NicolasHug/Surprise
 - Py2neo 4.3 https://pypi.org/project/py2ne
